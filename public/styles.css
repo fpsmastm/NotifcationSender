@@ -1,0 +1,92 @@
+:root {
+  color-scheme: light;
+  --bg: #f3f4f7;
+  --card: #ffffff;
+  --text: #171923;
+  --muted: #5b6474;
+  --accent: #5b5df5;
+  --accent-2: #7a40ff;
+  --border: #e7eaf1;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif;
+  background: radial-gradient(circle at top, #eef1ff, var(--bg));
+  color: var(--text);
+}
+
+.shell {
+  width: min(940px, 94vw);
+  margin: 2.2rem auto;
+  display: grid;
+  gap: 1.2rem;
+}
+
+.hero {
+  padding: 1rem;
+}
+
+.hero h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 2.5rem); }
+.hero p { margin: 0.35rem 0 0; color: var(--muted); }
+
+.card {
+  background: var(--card);
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  box-shadow: 0 12px 30px rgba(20, 20, 60, 0.06);
+  padding: 1rem;
+}
+
+.controls { display: grid; gap: 0.95rem; }
+.control-row { display: grid; gap: 0.45rem; }
+label { font-weight: 600; font-size: 0.93rem; }
+
+input[type='text'], textarea, input[type='file'] {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  padding: 0.75rem;
+  font: inherit;
+}
+
+textarea { resize: vertical; }
+
+.actions { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+button {
+  border: none;
+  border-radius: 999px;
+  background: #e9ebf8;
+  color: var(--text);
+  padding: 0.62rem 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+button.primary {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: #fff;
+}
+
+.status { margin: 0; color: var(--muted); font-size: 0.95rem; }
+.preview { max-height: 190px; max-width: min(360px, 100%); border-radius: 10px; border: 1px solid var(--border); }
+.hidden { display: none; }
+
+.feed ul, #feed {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.feed-item {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.75rem;
+  margin-bottom: 0.65rem;
+}
+
+.feed-item p { margin: 0.35rem 0; }
+.feed-item small { color: var(--muted); }
+.feed-item img { margin-top: 0.5rem; width: min(250px, 100%); border-radius: 8px; }
