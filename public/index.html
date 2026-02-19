@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Notify Everyone</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="hero">
+        <h1>Notify Everyone</h1>
+        <p>Send text + image notifications to all subscribed users, whether tabs are open or closed.</p>
+      </header>
+
+      <section class="card controls">
+        <div class="control-row">
+          <label for="name">Display name</label>
+          <input id="name" type="text" maxlength="40" placeholder="Your name" />
+        </div>
+
+        <div class="control-row">
+          <label for="message">Message</label>
+          <textarea id="message" rows="4" placeholder="Type a message to notify everyone"></textarea>
+        </div>
+
+        <div class="control-row">
+          <label for="image">Attach image (optional)</label>
+          <input id="image" type="file" accept="image/*" />
+          <img id="preview" class="preview hidden" alt="Image preview" />
+        </div>
+
+        <div class="actions">
+          <button id="enable" class="primary" type="button">Enable Notifications</button>
+          <button id="send" type="button">Send To Everyone</button>
+        </div>
+
+        <p id="status" class="status">Notification permission not granted yet.</p>
+      </section>
+
+      <section class="card feed">
+        <h2>Live Activity</h2>
+        <ul id="feed"></ul>
+      </section>
+    </main>
+
+    <script src="app.js" type="module"></script>
+  </body>
+</html>
