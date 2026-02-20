@@ -1,11 +1,13 @@
 const path = require('path');
 const crypto = require('crypto');
+const fs = require('fs');
 const express = require('express');
 const webpush = require('web-push');
 const { WebSocketServer } = require('ws');
 
 const app = express();
 const port = process.env.PORT || 3000;
+const subscriptionsFile = path.join(__dirname, 'data', 'subscriptions.json');
 
 app.use(express.json({ limit: '5mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -22,6 +24,31 @@ const getVapidKeys = () => {
   return { ...generatedKeys, generated: true };
 };
 
+const readSubscriptionsFromDisk = () => {
+  try {
+    if (!fs.existsSync(subscriptionsFile)) {
+      return [];
+    }
+
+    const raw = fs.readFileSync(subscriptionsFile, 'utf8');
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+
+const writeSubscriptionsToDisk = (subscriptionsMap) => {
+  const allSubscriptions = [...subscriptionsMap.values()];
+  const targetDir = path.dirname(subscriptionsFile);
+
+  if (!fs.existsSync(targetDir)) {
+    fs.mkdirSync(targetDir, { recursive: true });
+  }
+
+  fs.writeFileSync(subscriptionsFile, JSON.stringify(allSubscriptions, null, 2), 'utf8');
+};
+
 const vapidKeys = getVapidKeys();
 webpush.setVapidDetails('mailto:admin@example.com', vapidKeys.publicKey, vapidKeys.privateKey);
 
@@ -32,7 +59,12 @@ if (vapidKeys.generated) {
   );
 }
 
-const pushSubscriptions = new Map();
+const pushSubscriptions = new Map(
+  readSubscriptionsFromDisk()
+    .filter((subscription) => subscription?.endpoint)
+    .map((subscription) => [subscription.endpoint, subscription])
+);
+
 const recentMessages = [];
 const wss = new WebSocketServer({ noServer: true });
 
@@ -66,15 +98,21 @@ const broadcastRealtime = (message) => {
 const sendPushToSubscribers = async (message) => {
   const payload = toNotificationPayload(message);
   const sendTasks = [];
+  let removedAny = false;
 
   pushSubscriptions.forEach((subscription, key) => {
     const task = webpush.sendNotification(subscription, payload).catch(() => {
       pushSubscriptions.delete(key);
+      removedAny = true;
     });
     sendTasks.push(task);
   });
 
   await Promise.all(sendTasks);
+
+  if (removedAny) {
+    writeSubscriptionsToDisk(pushSubscriptions);
+  }
 };
 
 app.get('/healthz', (_req, res) => {
@@ -97,6 +135,7 @@ app.post('/api/subscribe', (req, res) => {
   }
 
   pushSubscriptions.set(subscription.endpoint, subscription);
+  writeSubscriptionsToDisk(pushSubscriptions);
   return res.status(201).json({ success: true, totalSubscribers: pushSubscriptions.size });
 });
 
