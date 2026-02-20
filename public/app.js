@@ -51,14 +51,16 @@ const addFeedItem = (entry) => {
   feed.prepend(li);
 };
 
-const showForegroundNotification = (entry) => {
+const showLocalNotification = (entry) => {
   if (Notification.permission !== 'granted') return;
 
   registration?.showNotification(`${entry.sender} sent a notification`, {
     body: entry.text || 'Sent an image',
     image: entry.imageDataUrl || undefined,
     icon: entry.imageDataUrl || undefined,
-    data: { url: '/' }
+    tag: entry.id,
+    renotify: false,
+    data: { url: '/', messageId: entry.id }
   });
 };
 
@@ -80,8 +82,8 @@ const connectRealtime = () => {
 
     if (type === 'message') {
       addFeedItem(payload);
-      if (document.visibilityState === 'visible') {
-        showForegroundNotification(payload);
+      if (document.visibilityState !== 'visible') {
+        showLocalNotification(payload);
       }
     }
   };
