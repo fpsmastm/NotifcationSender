@@ -7,6 +7,8 @@ const imageInput = document.getElementById('image');
 const preview = document.getElementById('preview');
 const feed = document.getElementById('feed');
 
+const SUBSCRIPTION_FLAG_KEY = 'notificationsOptedIn';
+
 let imageDataUrl = '';
 let registration = null;
 
@@ -90,6 +92,14 @@ const connectRealtime = () => {
   };
 };
 
+const postSubscriptionToServer = async (subscription) => {
+  await fetch('/api/subscribe', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ subscription })
+  });
+};
+
 const subscribeToPush = async () => {
   const config = await fetch('/api/config').then((res) => res.json());
   const subscription = await registration.pushManager.subscribe({
@@ -97,11 +107,26 @@ const subscribeToPush = async () => {
     applicationServerKey: base64ToUint8Array(config.vapidPublicKey)
   });
 
-  await fetch('/api/subscribe', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ subscription })
-  });
+  await postSubscriptionToServer(subscription);
+  localStorage.setItem(SUBSCRIPTION_FLAG_KEY, 'true');
+};
+
+const ensurePermanentSubscription = async () => {
+  if (!registration || Notification.permission !== 'granted') {
+    return;
+  }
+
+  const existingSubscription = await registration.pushManager.getSubscription();
+
+  if (existingSubscription) {
+    await postSubscriptionToServer(existingSubscription);
+    localStorage.setItem(SUBSCRIPTION_FLAG_KEY, 'true');
+    return;
+  }
+
+  if (localStorage.getItem(SUBSCRIPTION_FLAG_KEY) === 'true') {
+    await subscribeToPush();
+  }
 };
 
 const enableNotifications = async () => {
@@ -118,12 +143,8 @@ const enableNotifications = async () => {
     return;
   }
 
-  const currentSubscription = await registration.pushManager.getSubscription();
-  if (!currentSubscription) {
-    await subscribeToPush();
-  }
-
-  updateStatus('Notifications enabled. You can now receive alerts in-page and in the background.');
+  await ensurePermanentSubscription();
+  updateStatus('Subscribed permanently on this browser. You will keep receiving notifications.');
 };
 
 const sendMessage = async () => {
@@ -187,8 +208,13 @@ sendButton.addEventListener('click', async () => {
 });
 
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js').then((reg) => {
+  navigator.serviceWorker.register('/sw.js').then(async (reg) => {
     registration = reg;
+
+    if (Notification.permission === 'granted') {
+      await ensurePermanentSubscription();
+      updateStatus('Already subscribed on this browser.');
+    }
   }).catch(() => {
     updateStatus('Service worker registration failed.');
   });
