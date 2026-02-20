@@ -5,12 +5,15 @@ self.addEventListener('push', (event) => {
 
   const payload = event.data.json();
   const title = payload.title || 'New Notification';
+  const messageId = payload?.data?.message?.id;
 
   event.waitUntil(
     self.registration.showNotification(title, {
       body: payload.body || '',
       image: payload.image || undefined,
       icon: payload.image || undefined,
+      tag: messageId,
+      renotify: false,
       data: payload.data || { url: '/' }
     })
   );
